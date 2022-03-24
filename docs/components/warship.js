@@ -1,11 +1,16 @@
 Vue.component('warship', {
-  props: ['id', 'mirror', 'warship', 'colors'],
+  props: ['id', 'mirror', 'warship', 'colors', 'underattack', 'attacking', 'attacker'],
   template: document.getElementById('warship').innerHTML,
   data: () => ({
     i: 1,
     ended: true,
     image: `images/ships/${Math.floor(Math.random() * 6) + 1}.png`,
   }),
+  watch: {
+    underattack(v) {
+      console.log('ua', v);
+    }
+  },
   computed: {
     state() {
       return this.warship.value;

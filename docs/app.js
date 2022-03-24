@@ -2,7 +2,7 @@ const enableAutoClick = false;
 const clickDelay = 300;
 const attackDelay = 1200;
 const refreshDelay = 800;
-let startDelay = 1000;
+const startDelay = 1000;
 
 new Vue({
   data: {
@@ -13,9 +13,11 @@ new Vue({
     //turnA: true,
     turnA: !!Math.round(Math.random()),
     damage: null,
-    playWithBot: false,
     winner: null,
-    attacking: false,
+    attacker: null,
+    underAttackA: false,
+    underAttackB: false,
+
     //a: { 1: 0, 3: 0, 5: 0, 7: 0, 9: 0 },
     //b: { 1: 0, 3: 0, 5: 0, 7: 0, 9: 0 },
   },
@@ -38,22 +40,20 @@ new Vue({
     b() {
       return this.playerB.warships;
     },
+    attacking() {
+      return this.underAttackA || this.underAttackB;
+    },
   },
   methods: {
     random(precentClick = false) {
-      if ((startDelay && enableAutoClick) && precentClick)
-        return;
-      startDelay = 1;
-      if (this.attacking || !this.playable) return;
+      if (!this.playable || this.attacking) return;
       if (this.winnerA) {
         this.winner = this.playerA;
-        enableAutoClick && setTimeout(() => location.reload(), refreshDelay);
-        return;
+        return this.completeProcess();
       }
       if (this.winnerB) {
         this.winner = this.playerB;
-        enableAutoClick && setTimeout(() => location.reload(), refreshDelay);
-        return;
+        return this.completeProcess();
       }
       this.damage = null;
       let odd = Object.keys(this.a);
@@ -61,28 +61,24 @@ new Vue({
       this.number = n;
       if (this.turnA) {
         if (!(n in this.a)) {
-          enableAutoClick && setTimeout(() => this.random(), clickDelay);
-          return;
+          return this.loadPostProcess();
         }
         let z = this.a[n];
         this.turnA = false;
         if (z < 0) {
           this.damage = this.playerA + ' #' + n + ' missed turn!';
-          enableAutoClick && setTimeout(() => this.random(), clickDelay);
-          return;
+          return this.loadPostProcess();
         }
         this.a[n].value++;
       } else {
         if (!(n in this.b)) {
-          enableAutoClick && setTimeout(() => this.random(), clickDelay);
-          return;
+          return this.loadPostProcess();
         }
         let z = this.b[n];
         this.turnA = true;
         if (z < 0) {
           this.damage = this.playerB + ' #' + n + ' missed turn!';
-          enableAutoClick && setTimeout(() => this.random(), clickDelay);
-          return;
+          return this.loadPostProcess();
         }
         this.b[n].value++;
       }
@@ -106,42 +102,40 @@ new Vue({
       if (b.length) {
         return this.makeMoveByB(...b);
       }
-      enableAutoClick && setTimeout(() => this.random(), clickDelay);
-      // this.playWithBot && this.checkToPlayByBot(a, b);
-    },
-    checkToPlayByBot(a, b) {
-      if (!this.turnA && !(a.length && b.length)) {
-        this.playable = false;
-        setTimeout(() => {
-          this.playable = true;
-          this.random();
-        }, Math.random() * 1000 + 800);
-      }
+      this.loadPostProcess();
     },
     makeMoveByA(i) {
       let t = Object.entries(this.b).sort(([, a], [, b]) => b - a)[0][0];
       this.playable = false;
-      this.attacking = true;
-      this.damage = `${this.playerB} #${i} attacked to ${this.playerA} #${t}`;
-      setTimeout(() => {
-        this.a[i].value = 0;
-        this.b[t].value = -1;
-        this.playable = true;
-        this.attacking = false;
-        enableAutoClick && setTimeout(() => this.random(), clickDelay);
-      }, attackDelay);
+      this.underAttackB = true;
+      this.attacker = i;
+      // this.damage = `${this.playerB} is under attacked by ${this.playerA}`;
+      this.damage = `Choose ${this.playerB}'s warship to destroy!`;
     },
     makeMoveByB(i) {
       let t = Object.entries(this.a).sort(([, a], [, b]) => b - a)[0][0];
       this.playable = false;
-      this.attacking = true;
-      setTimeout(() => {
-        this.b[i].value = 0;
-        this.a[t].value = -1;
-        this.playable = true;
-        this.attacking = false;
-        enableAutoClick && setTimeout(() => this.random(), clickDelay);
-      }, attackDelay);
+      this.underAttackA = true;
+      this.attacker = i;
+      // this.damage = `${this.playerA} is under attacked by ${this.playerB}`;
+      this.damage = `Choose ${this.playerA}'s warship to destroy!`;
+    },
+    attackTarget(warship, ua) {
+      if (!ua) return;
+      if (!this.attacking) return;
+      let a = this.underAttackA;
+      let attacker = this[a ? 'playerB' : 'playerA'].warships;
+      attacker[this.attacker].value = 0;
+      warship.value = -1;
+      this.underAttackA = this.underAttackB = false;
+      this.playable = true;
+      this.attacker = null;
+    },
+    loadPostProcess() {
+      enableAutoClick && setTimeout(() => this.random(), clickDelay);
+    },
+    completeProcess() {
+      enableAutoClick && setTimeout(() => location.reload(), refreshDelay);
     },
   },
   beforeMount() {
