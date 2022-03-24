@@ -51,7 +51,7 @@
             v-for="(n, i) of a"
             :data-no="i"
             :id="Math.floor(Math.random() * 6) + 1"
-            :state="n"
+            :warship="n"
             :colors="['bg-indigo-400', 'bg-indigo-600']"
           ></warship>
         </player>
@@ -90,7 +90,7 @@
             :data-no="i"
             :id="Math.floor(Math.random() * 6) + 1"
             :mirror="true"
-            :state="n"
+            :warship="n"
             :colors="['bg-rose-400', 'bg-rose-600']"
           ></warship>
         </player>
@@ -231,7 +231,8 @@
       <div v-else class="h-1.5"></div>
     </div>
   </template>
-  <audio id="explosion" src="soundtracks/explosion.mp3"  muted loop preload="auto"><class=""/audio>
+  <audio id="explosion" src="soundtracks/explosion.mp3"  muted loop preload="auto"></audio>
+  <script src="core.js"></script>
   <script src="components/player.js"></script>
   <script src="components/warship.js"></script>
   <script src="app.js"></script>

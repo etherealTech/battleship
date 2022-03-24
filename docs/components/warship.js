@@ -1,11 +1,16 @@
 Vue.component('warship', {
-  props: ['id', 'mirror', 'state', 'colors'],
+  props: ['id', 'mirror', 'warship', 'colors'],
   template: document.getElementById('warship').innerHTML,
   data: () => ({
     i: 1,
     ended: true,
     image: `images/ships/${Math.floor(Math.random() * 6) + 1}.png`,
   }),
+  computed: {
+    state() {
+      return this.warship.value;
+    },
+  },
   methods: {
     end() {
       this.ended = true;
