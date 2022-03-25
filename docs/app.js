@@ -9,8 +9,8 @@ new Vue({
     playable: true,
     playerA: new Player('Blue', 'a').generateWarships(),
     playerB: new Player('Red', 'b').generateWarships(),
-    number: undefined
-    turnA: !!Math.round(Math.random()),
+    number: undefined,
+    turnA: true,
     damage: null,
     winner: null,
     attacker: null,
