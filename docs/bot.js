@@ -99,23 +99,29 @@ new Vue({
       this.loadPostProcess();
     },
     makeMoveByA(i) {
-      let t = Object.entries(this.b).sort(([, a], [, b]) => b - a)[0][0];
       this.playable = false;
       this.underAttackB = true;
       this.attacker = i;
       this.damage = `Choose ${this.playerB}'s warship to destroy!`;
+      this.loadPostProcess();
     },
     makeMoveByB(i) {
-      let t = Object.entries(this.a).sort(([, a], [, b]) => b - a)[0][0];
+      let warships = this.a.filter(w => w.value >= 0).sort((a, b) => b.value - a.value);
       this.playable = false;
       this.underAttackA = true;
       this.attacker = i;
       this.damage = `${this.playerB} is attacking...`;
+      setTimeout(() => {
+        this.destroyTarget(warships[0]);
+      }, 600 + Math.random() * 1000);
     },
-    attackTarget(warship, ua) {
-      if (!ua) return;
-      if (warship.value == -1) return;
+    attackTarget(warship, turn) {
+      if (!turn) return;
       if (!this.attacking) return;
+      if (warship.value == -1) return;
+      this.destroyTarget(warship);
+    },
+    destroyTarget(warship) {
       let a = this.underAttackA;
       let attacker = this[a ? 'playerB' : 'playerA'].warships;
       attacker[this.attacker].value = 0;
@@ -123,12 +129,13 @@ new Vue({
       this.underAttackA = this.underAttackB = false;
       this.playable = true;
       this.attacker = null;
+      this.loadPostProcess();
     },
     loadPostProcess() {
       if (!this.turnA) {
         setTimeout(() => {
           this.loadProcess();
-        }, 600 + Math.random() * 2000);
+        }, 400 + Math.random() * 400);
       }
     },
   },

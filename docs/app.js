@@ -100,14 +100,12 @@ new Vue({
       }
     },
     makeMoveByA(i) {
-      let t = Object.entries(this.b).sort(([, a], [, b]) => b - a)[0][0];
       this.playable = false;
       this.underAttackB = true;
       this.attacker = i;
       this.damage = `Choose ${this.playerB}'s warship to destroy!`;
     },
     makeMoveByB(i) {
-      let t = Object.entries(this.a).sort(([, a], [, b]) => b - a)[0][0];
       this.playable = false;
       this.underAttackA = true;
       this.attacker = i;
