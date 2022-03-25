@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Battle Warship</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendors/vue.js"></script>
+  <script src="vendors/tailwind.js"></script>
+  <style>
+    .z {
+      position: relative;
+    }
+
+    .z::before {
+      position: absolute;
+      content: "["attr(data-no) "]";
+      font-size: .6rem;
+      color: #888;
+    }
+  </style>
+</head>
+
+<body class="text-slate-700">
+  <main @click="random(true)" class="absolute inset-0 flex items-center justify-center bg-gradient-to-tr from-zinc-900 to-lime-900">
+    <section class="container relative w-full mx-auto text-center">
+      <div class="w-full p-4 bg-white rounded shadow-md">
+        <div class="px-4 py-4 space-y-4" v-if="winner">
+          <h2 class="pb-4 text-2xl font-bold text-teal-600">
+            Winner is {{ winner }}!
+          </h2>
+          <a class="block px-12 py-4 font-semibold text-gray-300 transition-all bg-gray-800 rounded-lg text-md duration-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-700 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 hover:brightness-150" href="?">Play Again</a>
+        </div>
+        <div v-else class="grid grid-cols-5 gap-4">
+          <!-- Player A -->
+          <player class="col-span-2" :name="playerA" color="text-indigo-600" :turn="turnA">
+            <warship class="z" v-for="(n, i) of a" :data-no="i" :id="i" :warship="n" :colors="['bg-indigo-400', 'bg-indigo-600']" :underattack="underAttackA" :attacking="underAttackB" :attacker="attacker"></warship>
+          </player>
+          <div class="flex items-center justify-center w-full h-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 transition-all ease-in-out transform duration-800" :class="{
+              'rotate-0 text-indigo-500': turnA && !attacking,
+              'rotate-180 text-rose-500': !turnA & !attacking,
+              'rotate-0 text-rose-600': turnA && attacking,
+              'rotate-180 text-indigo-600': !turnA && attacking,
+              'scale-100': !attacking,
+              'animate-pluse scale-150 opacity-60': attacking,
+            }" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <!-- Player B -->
+          <player class="col-span-2" :name="playerB" color="text-rose-600" :turn="!turnA">
+            <warship class="z" v-for="(n, i) of b" :data-no="i" :id="Math.floor(Math.random() * 6) + 1" :mirror="true" :warship="n" :colors="['bg-rose-400', 'bg-rose-600']" :underattack="underAttackB" :attacking="underAttackA" :attacker="attacker"></warship>
+          </player>
+          <div class="flex flex-col items-center justify-center col-span-5 space-y-2 ">
+            <!-- INFO: Bottom Navigation -->
+            <div class="flex items-center justify-center mx-auto">
+              <div class="px-4 py-3 font-bold text-white rounded-md opacity-80 bg-slate-600/60">
+                <span v-if="damage">{{ damage }}</span>
+                <span v-else>{{ turnA ? playerB : playerA }}: {{ number }}</span>
+              </div>
+            </div>
+            <template v-if="false">
+              <!-- Play Button -->
+              <button v-if="playWithBot" v-text="turnA ? 'Your Turn' : 'Bot Turn'" class="px-12 py-4 text-lg font-semibold transition-all rounded-lg duration-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-700 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 disabled:bg-gray-300 disabled:text-gray-50" @click="random()" :disabled="!(playable && turnA)" :class="
+                playable &&
+                turnA &&
+                'bg-gray-800 text-gray-300 hover:brightness-150'
+              "></button>
+              <button v-else v-text="
+                playable
+                  ? (turnA ? playerA : playerB) + ' Turn'
+                  : 'Please wait...'
+              " @click="random()" class="px-12 py-4 text-lg font-semibold text-gray-300 transition-all bg-gray-800 rounded-lg duration-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-700 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 hover:brightness-150 disabled:hover:brightness-100 disabled:bg-gray-300 disabled:text-gray-50" :disabled="!playable" :class="{ 'bg-indigo-700': turnA, 'bg-rose-700': !turnA }"></button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- Player Template -->
+  <template id="player">
+    <div>
+      <h2 class="py-2 font-semibold text-center transition duration-400" :class="turn && 'font-bold ' + color" v-text="name"></h2>
+      <div class="grid gap-2">
+        <slot></slot>
+      </div>
+    </div>
+  </template>
+  <!-- Warship Template -->
+  <template id="warship">
+    <div class="flex flex-col items-center justify-center" @click="$root.attackTarget(warship, underattack)" :class="{
+        'opacity-60 grayscale hover:grayscale-0 hover:opacity-100': underattack,
+        'cursor-pointer': underattack
+      }">
+      <div class="relative w-20 h-20 ove
+        rflow-hidden">
+        <img class="absolute inset-x-0 bottom-0 object-contain h-16 transform" :class="{
+          '-scale-x-100': mirror,
+          'grayscale opacity-40': state == -1,
+          'opacity-100 scale-100 translate-y-0': state < 0,
+          'opacity-40 grayscale': attacking && attacker != id,
+          }" :src="image" />
+        <img class="
+            absolute
+            bottom-0
+            inset-x-0
+            object-contain
+            w-12
+            transition-all
+            ease
+            duration-[2s]
+            transform
+          " src="images/explosion/1.png" ref="explosion" :class="{ 'opacity-0 scale-0 translate-y-10': !(state < 0) }" />
+      </div>
+      <div class="grid gap-0.5 grid-cols-4 self-center h-1.5" v-if="state != -1">
+        <div class="
+            w-4
+            border border-0.5 border-gray-400
+            transition-all
+            ease
+            duration-400
+            rounded-l
+          " :class="{ [colors[0]]: state > 0, 'bg-gray-300': !(state > 0) }"></div>
+        <div class="
+            w-4
+            border border-0.5 border-gray-400
+            transition-all
+            ease
+            duration-400
+          " :class="{ [colors[0]]: state > 1, 'bg-gray-300': !(state > 1) }"></div>
+        <div class="
+            w-4
+            border border-0.5 border-gray-400
+            transition-all
+            ease
+            duration-400
+          " :class="{ [colors[0]]: state > 2, 'bg-gray-300': !(state > 2) }"></div>
+        <div class="
+            w-4
+            border border-0.5 border-gray-400
+            transition-all
+            ease
+            duration-400
+            rounded-r
+          " :class="{ [colors[0]]: state > 3, 'bg-gray-300': !(state > 3) }"></div>
+      </div>
+      <div v-else class="h-1.5"></div>
+    </div>
+  </template>
+  <script src="core.js"></script>
+  <script src="components/player.js"></script>
+  <script src="components/warship.js"></script>
+  <script src="bot.js"></script>
+</body>
+
+</html>

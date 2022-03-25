@@ -1,16 +1,10 @@
-const enableAutoClick = false;
-const clickDelay = 300;
-const attackDelay = 1200;
-const refreshDelay = 800;
-const startDelay = 1000;
-
 new Vue({
   data: {
     playable: true,
-    playerA: new Player('Blue', 'a').generateWarships(),
-    playerB: new Player('Red', 'b').generateWarships(),
-    number: undefined
-    turnA: !!Math.round(Math.random()),
+    playerA: new Player('You', 'a').generateWarships(),
+    playerB: new Player('Bot', 'b').generateWarships(),
+    number: undefined,
+    turnA: true,
     damage: null,
     winner: null,
     attacker: null,
@@ -41,7 +35,11 @@ new Vue({
     },
   },
   methods: {
-    random(precentClick = false) {
+    random() {
+      if (!this.turnA) return;
+      this.loadProcess();
+    },
+    loadProcess() {
       if (!this.playable || this.attacking) return;
       if (this.winnerA) {
         this.winner = this.playerA;
@@ -57,24 +55,24 @@ new Vue({
       this.number = n;
       if (this.turnA) {
         if (!(n in this.a)) {
-          return;
+          return this.loadPostProcess();
         }
         let z = this.a[n];
         this.turnA = false;
         if (z < 0) {
           this.damage = this.playerA + ' #' + n + ' missed turn!';
-          return;
+          return this.loadPostProcess();
         }
         this.a[n].value++;
       } else {
         if (!(n in this.b)) {
-          return;
+          return this.loadPostProcess();
         }
         let z = this.b[n];
         this.turnA = true;
         if (z < 0) {
           this.damage = this.playerB + ' #' + n + ' missed turn!';
-          return;
+          return this.loadPostProcess();
         }
         this.b[n].value++;
       }
@@ -98,6 +96,7 @@ new Vue({
       if (b.length) {
         return this.makeMoveByB(...b);
       }
+      this.loadPostProcess();
     },
     makeMoveByA(i) {
       let t = Object.entries(this.b).sort(([, a], [, b]) => b - a)[0][0];
@@ -111,7 +110,7 @@ new Vue({
       this.playable = false;
       this.underAttackA = true;
       this.attacker = i;
-      this.damage = `Choose ${this.playerA}'s warship to destroy!`;
+      this.damage = `${this.playerB} is attacking...`;
     },
     attackTarget(warship, ua) {
       if (!ua) return;
@@ -124,6 +123,13 @@ new Vue({
       this.underAttackA = this.underAttackB = false;
       this.playable = true;
       this.attacker = null;
+    },
+    loadPostProcess() {
+      if (!this.turnA) {
+        setTimeout(() => {
+          this.loadProcess();
+        }, 600 + Math.random() * 2000);
+      }
     },
   },
 }).$mount('main');
